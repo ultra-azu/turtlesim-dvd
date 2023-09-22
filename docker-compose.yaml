@@ -1,0 +1,34 @@
+version: '2'
+
+services:
+  roscore:
+    image: ros:melodic
+    command: stdbuf -o L roscore
+    restart: unless-stopped
+    environment:
+    - "ROS_MASTER_URI=http://roscore:11311"
+
+  listener:
+    image: turtlesim-dvd
+    restart: unless-stopped
+    environment:
+    - "ROS_MASTER_URI=http://roscore:11311"
+
+  publisher:
+    image: turtlesim
+    restart: unless-stopped
+    environment:
+    - "ROS_MASTER_URI=http://roscore:11311"
+    - "DISPLAY"
+    - "QT_X11_NO_MITSHM=1" #fix some QT bugs
+    #share your user to the container in order to access your x11
+    user: 1000:1000
+    volumes:
+      #share your x11 socket and permissions to the container
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /etc/group:/etc/group:ro
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/shadow:/etc/shadow:ro
+      - /etc/sudoers:/etc/sudoers:ro
+      - /etc/sudoers.d:/etc/sudoers.d:ro
+      - /home/me:/home/me:rw #share your home with write permissions

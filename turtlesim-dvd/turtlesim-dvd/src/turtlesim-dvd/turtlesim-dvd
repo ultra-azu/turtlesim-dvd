@@ -8,50 +8,64 @@ import math
 import time
 import random
 
+# Needed so that there is some communication between
+# callback and the dvd function
 x = float(0)
 y = float(0)
 
 def poseCallback(pose_message):
     global x, y, theta, linear_velocity, angular_velocity
 
+    #Store the current coordinates
     x = pose_message.x
     y = pose_message.y
 
 def dvd(speed, is_forward):
-    velocity_message = Twist()
     global x, y
+    velocity_message = Twist()
+
+    # Set correct sign, depending whether turtle will move 
+    # forward or backwards
     if (is_forward == True):
         abs_speed = abs(speed)
     else:
         abs_speed = -abs(speed)
 
+    # Slightly modify x speed so that it isn't a perfect diagonal,
+    # and collides with one of the walls
     velocity_message.linear.x = abs_speed + 0.5
     velocity_message.linear.y = abs_speed
 
-    loop_rate = rospy.Rate(10)
+    loop_rate = rospy.Rate(30)
     cmd_vel_topic = '/turtle1/cmd_vel'
     velocity_publisher = rospy.Publisher(cmd_vel_topic, Twist, queue_size=10)
 
+    #A failed attempt to make this code stoppable
     while not rospy.is_shutdown():
-        #rospy.loginfo("Turtlesim moves forwards")
         velocity_publisher.publish(velocity_message)
         
         loop_rate.sleep()
 
+        # If x is at the border, modify speed
+        # (I'm not sure if this is the exact border but this is what
+        # I came up with while testing)
         if (x >= 11.0):
-            velocity = random.uniform(-abs_speed*0.5, -abs_speed)
-            rospy.loginfo("velocity_x = {velocity}")
-            velocity_message.linear.x = velocity
-        elif (x <= 0.2):
-            velocity = random.uniform(abs_speed, abs_speed*0.5)
+            # Slightly randomize velocity so that the trajectory isn't predetermined
+            velocity = random.uniform(-abs_speed*1.5, -abs_speed)
             rospy.loginfo("velocity_x = {velocity}")
             velocity_message.linear.x = velocity
 
+        # Same thing but in the other border
+        elif (x <= 0.2):
+            velocity = random.uniform(abs_speed, abs_speed*1.5)
+            velocity_message.linear.x = velocity
+
+        # Same thing but with y
         if (y >= 11.0):
-            velocity = random.uniform(-abs_speed*0.5, -abs_speed)
+            velocity = random.uniform(-abs_speed*1.5, -abs_speed)
             velocity_message.linear.y = velocity
         elif (y <= 0.2):
-            velocity = random.uniform(abs_speed, -abs_speed*0.5)
+            velocity = random.uniform(abs_speed, abs_speed*1.5)
             velocity_message.linear.y = velocity
 
 
